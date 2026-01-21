@@ -7,7 +7,7 @@ on:
     branches: ["main"]
 
 jobs:
-  test-API:
+  api-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -60,4 +60,55 @@ jobs:
       - name: Stop application
         if: always()
         run: pkill -f formation-cicd-test-tp-03 || true
+
+#On refait les mêmes étapes car chaque job est indépendant et exécuté sur une machine différente.
+#L’application doit donc être rebuildée et relancée avant chaque type de test.
+#Cette isolation garantit que les tests de sécurité s’exécutent dans un environnement propre et reproductible,
+#sans dépendre des effets de bord du job précédent.
+  security-tests:
+    runs-on: ubuntu-latest
+    needs: api-tests   # ne démarre que si les tests API ont réussi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build application
+        run: mvn -q clean package
+
+      - name: Start application
+        run: nohup java -jar target/formation-cicd-test-tp-03-1.0-SNAPSHOT.jar > ../app.log 2>&1 &
+
+      - name: Wait for API to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -sSf http://localhost:8080/health > /dev/null; then
+              echo "API is up!"
+              exit 0
+            fi
+            echo "Waiting API..."
+            sleep 2
+          done
+
+          echo "API not ready"
+          tail -n 200 app.log || true
+          exit 1
+
+      - name: Run OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: "http://localhost:8080"
+          fail_action: false   # Ne fait pas échouer le job si vulnérabilités détectées
+
+      - name: Upload ZAP reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-security-reports
+          path: |
+            zap-report.html
+            zap-report.json
+            zap-report.md
 
