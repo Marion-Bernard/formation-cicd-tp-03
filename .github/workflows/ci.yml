@@ -19,7 +19,7 @@ jobs:
         run: mvn -q clean package
 
       - name: Start application
-        run : nohup java -jar target/formation-cicd-test-tp-03-solution-1.0-SNAPSHOT.jar > ../app.log 2>&1 &
+        run : nohup java -jar target/formation-cicd-test-tp-03-1.0-SNAPSHOT.jar > ../app.log 2>&1 &
 
       - name : Prepare API tests report directory
         run: mkdir -p api-test-reports
