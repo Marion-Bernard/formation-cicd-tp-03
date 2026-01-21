@@ -107,11 +107,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zap-security
+          name: zap-security-reports
           path: |
             zap-security.html
             zap-security.json
             zap-security.md
+          if-no-files-found: warn
 
 
 

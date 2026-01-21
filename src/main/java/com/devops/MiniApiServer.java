@@ -77,6 +77,7 @@ public final class MiniApiServer {
     }
 
     private static void sendJson(HttpExchange exchange, int status, String json) throws IOException {
+        addSecurityHeaders(exchange);
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
         exchange.sendResponseHeaders(status, bytes.length);
@@ -86,6 +87,7 @@ public final class MiniApiServer {
     }
 
     private static void sendText(HttpExchange exchange, int status, String text) throws IOException {
+        addSecurityHeaders(exchange);
         byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "text/plain; charset=utf-8");
         exchange.sendResponseHeaders(status, bytes.length);
@@ -95,6 +97,7 @@ public final class MiniApiServer {
     }
 
     private static void sendHtml(HttpExchange exchange, int status, String html) throws IOException {
+        addSecurityHeaders(exchange);
         byte[] bytes = html.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
         exchange.sendResponseHeaders(status, bytes.length);
@@ -102,4 +105,12 @@ public final class MiniApiServer {
             os.write(bytes);
         }
     }
+
+    private static void addSecurityHeaders(HttpExchange exchange) {
+        exchange.getResponseHeaders().set("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+        exchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
+        exchange.getResponseHeaders().set("X-Frame-Options", "DENY");
+        exchange.getResponseHeaders().set("Content-Security-Policy", "default-src 'self'");
+    }
+
 }
