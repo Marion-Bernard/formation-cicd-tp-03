@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: ["main"]
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   api-tests:
     runs-on: ubuntu-latest
@@ -15,10 +19,12 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'maven'
+
       - name: Build application
         run: mvn -q clean package
 
-      - name: Start application
+      - name: Start application (background)
         run : nohup java -jar target/formation-cicd-test-tp-03-1.0-SNAPSHOT.jar > ../app.log 2>&1 &
 
       - name : Prepare API tests report directory
@@ -109,12 +115,16 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zap-security-reports
+          name: zap-reports
           path: |
             report_html.html
             report_json.json
             report_md.md
           if-no-files-found: warn
+
+      - name: Stop application
+        if: always()
+        run: pkill -f formation-cicd-test-tp-03 || true
 
 
 
