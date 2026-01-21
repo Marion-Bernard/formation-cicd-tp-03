@@ -102,24 +102,37 @@ jobs:
           tail -n 200 app.log || true
           exit 1
 
+      - name: Create ZAP reports directory
+        run: mkdir -p zap-reports
+
       - name: Run OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: "http://localhost:8080"
           fail_action: false   # Ne fait pas échouer le job si vulnérabilités détectées
+          issue_title: 'OWASP ZAP Security Scan - ${{ github.run_number }}'
+          allow_issue_writing: false
 
-      - name : list ZAP report
-        run : ls -l #debug
+      - name: Move ZAP reports to directory
+        if: always()
+        run: |
+          # ZAP action crée les fichiers à la racine, on les déplace
+          mv report_html.html zap-reports/ 2>/dev/null || echo "⚠️ report_html.html not found"
+          mv report_md.md zap-reports/ 2>/dev/null || echo "⚠️ report_md.md not found"
+          mv report_json.json zap-reports/ 2>/dev/null || echo "⚠️ report_json.json not found"
+          
+          echo "=== ZAP reports directory contents ==="
+          ls -lah zap-reports/ || true
 
       - name: Upload ZAP reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zap-reports
-          path: |
-            report_html.html
-            report_json.json
-            report_md.md
+          name: zap-security-reports
+          path: zap-reports/
+#            report_html.html
+#           report_json.json
+#          report_md.md
           if-no-files-found: warn
 
       - name: Stop application
