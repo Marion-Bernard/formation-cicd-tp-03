@@ -31,17 +31,16 @@ public final class MiniApiServer {
             }
 
             String ordersJson = """
-        [
-          { "id": 1, "product": "Laptop", "price": 1200.0 },
-          { "id": 2, "product": "Mouse",  "price": 25.0 }
-        ]
-        """;
+                [
+                  { "id": 1, "product": "Laptop", "price": 1200.0 },
+                  { "id": 2, "product": "Mouse",  "price": 25.0 }
+                ]
+                """;
 
             sendJson(exchange, 200, ordersJson);
         });
 
-
-        // Petite page HTML racine (utile pour ZAP, et pour montrer qu'on a aussi du "web")
+        // Petite page HTML racine
         server.createContext("/", exchange -> {
             if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
                 sendText(exchange, 405, "Method Not Allowed");
@@ -63,6 +62,45 @@ public final class MiniApiServer {
             sendHtml(exchange, 200, html);
         });
 
+        // /robots.txt
+        server.createContext("/robots.txt", exchange -> {
+            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendText(exchange, 405, "Method Not Allowed");
+                return;
+            }
+            String content = """
+                User-agent: *
+                Disallow: /admin
+                """;
+            sendText(exchange, 200, content);
+        });
+
+        // /sitemap.xml
+        server.createContext("/sitemap.xml", exchange -> {
+            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendText(exchange, 405, "Method Not Allowed");
+                return;
+            }
+            String sitemap = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+                  <url>
+                    <loc>http://localhost:8080/</loc>
+                    <priority>1.0</priority>
+                  </url>
+                  <url>
+                    <loc>http://localhost:8080/health</loc>
+                    <priority>0.8</priority>
+                  </url>
+                  <url>
+                    <loc>http://localhost:8080/api/orders</loc>
+                    <priority>0.8</priority>
+                  </url>
+                </urlset>
+                """;
+            sendText(exchange, 200, sitemap);
+        });
+
         server.setExecutor(null);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -72,7 +110,6 @@ public final class MiniApiServer {
 
         server.start();
         System.out.println("Mini API Server started on http://localhost:" + port);
-        // Keep process alive
         Thread.currentThread().join();
     }
 
@@ -107,13 +144,19 @@ public final class MiniApiServer {
     }
 
     private static void addSecurityHeaders(HttpExchange exchange) {
+        // Security headers
         exchange.getResponseHeaders().set("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
         exchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
         exchange.getResponseHeaders().set("X-Frame-Options", "DENY");
         exchange.getResponseHeaders().set("Content-Security-Policy",
-                "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none';");
+                "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; " +
+                        "base-uri 'self'; frame-ancestors 'none';");
         exchange.getResponseHeaders().set("Cache-Control", "no-store, no-cache, must-revalidate");
         exchange.getResponseHeaders().set("Pragma", "no-cache");
         exchange.getResponseHeaders().set("Expires", "0");
+
+        // Headers pour réduire les warnings Spectre
+        exchange.getResponseHeaders().set("Cross-Origin-Opener-Policy", "same-origin");
+        exchange.getResponseHeaders().set("Cross-Origin-Embedder-Policy", "require-corp");
     }
 }
