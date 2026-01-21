@@ -110,12 +110,10 @@ public final class MiniApiServer {
         exchange.getResponseHeaders().set("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
         exchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
         exchange.getResponseHeaders().set("X-Frame-Options", "DENY");
-        exchange.getResponseHeaders().set("Content-Security-Policy", "default-src 'self'");
+        exchange.getResponseHeaders().set("Content-Security-Policy",
+                "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none';");
         exchange.getResponseHeaders().set("Cache-Control", "no-store, no-cache, must-revalidate");
         exchange.getResponseHeaders().set("Pragma", "no-cache");
         exchange.getResponseHeaders().set("Expires", "0");
-        exchange.getResponseHeaders().set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none';");
-
     }
-
 }
