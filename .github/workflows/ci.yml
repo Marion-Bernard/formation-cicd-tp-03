@@ -41,15 +41,15 @@ jobs:
       
 
       - name : Run API tests (Hurl via Docker)
-        run :
+        run: |
           docker run --rm \
-          --add-host=host.docker.internal:host-gateway \
-          -v ${{ github.workspace }}:/work \
-          ghcr.io/orange-opensource/hurl:latest \
-          --test /work/src/test/java/api
-          --report-junit /work/api-test-reports/junit.xml \
-          --report-html /work/api-test-reports/report.html \
-          --report-json /work/api-test-reports/report.json
+            --add-host=host.docker.internal:host-gateway \
+            -v ${{ github.workspace }}:/work \
+            ghcr.io/orange-opensource/hurl:latest \
+            --test /work/src/test/java/api \
+            --report-junit /work/api-test-reports/junit.xml \
+            --report-html /work/api-test-reports/report.html \
+            --report-json /work/api-test-reports/report.json
 
       - name: Upload API test reports
         uses: actions/upload-artifact@v4
