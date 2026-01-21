@@ -101,14 +101,8 @@ jobs:
         with:
           target: "http://localhost:8080"
           fail_action: false   # Ne fait pas échouer le job si vulnérabilités détectées
+          artifact_name: zap-security-reports
 
-      - name: Upload ZAP reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: zap-security-reports
-          path: |
-            zap-report.html
-            zap-report.json
-            zap-report.md
+
+
 
